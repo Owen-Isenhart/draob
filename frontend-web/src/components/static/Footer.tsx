@@ -6,7 +6,7 @@ export default function Footer() {
           font-black tracking-normal opacity-70 whitespace-nowrap
           [text-rendering:geometricPrecision]
           text-[clamp(5rem,20vw,25rem)]
-          bottom-[calc(-1*clamp(5rem,20vw,25rem)/2)]">
+          bottom-[calc(-1*clamp(5rem,20vw,25rem)/1.8)]">
           draob<span className="text-amber-700">.</span>
         </p>
         <div className="grid-effect"></div>

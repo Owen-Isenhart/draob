@@ -36,7 +36,7 @@ export default function HomeFlyer() {
       <div className="relative h-100 sm:h-120 -rotate-2 bg-white rounded-lg shadow-lg shadow-black/25 flex flex-col">
         {/* Content */}
         <div className="flex-grow">
-          <h1 className="text-5xl sm:text-6xl font-bold pt-8 px-8">
+          <h1 className="text-5xl lg:text-6xl font-bold pt-8 pl-8 pr-1">
             Your Campus,<br></br>One Board.
           </h1>
           <p className="text-lg sm:text-xl p-8">

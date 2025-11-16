@@ -6,6 +6,9 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion"; // Import AnimatePresence
 import type { TreeNodeData } from "@/lib/types";
+import { useMediaQuery } from "@/hooks/useMediaQuery"; // adjust path
+
+
 
 // All our node data, including paragraph text
 const nodeDataMap = new Map<string, TreeNodeData>([
@@ -181,6 +184,7 @@ const getNodeDepth = (nodeId: string): number => {
 export default function FeatureTree() {
   const [selectedId, setSelectedId] = useState("root");
   const [isTraversing, setIsTraversing] = useState(true); // State to control traversal
+  const isSmallScreen = useMediaQuery("(max-width: 1280px)"); // md breakpoint
   const pathIndex = useRef(0); // Ref to track traversal position
 
   // This MUST match the line animation duration
@@ -226,19 +230,29 @@ export default function FeatureTree() {
   }, [activeNodeIds]); // This recalculates whenever activeNodeIds changes
 
   // Get the data for the right-side display
-  const nodesToDisplay = useCallback(() => {
-    const ancestors: (TreeNodeData & { id: string })[] = []; // Add id to data
-    let currentId: string | undefined = selectedId; // Use selectedId directly
+const nodesToDisplay = useMemo(() => {
+  const selectedNodeData = nodeDataMap.get(selectedId);
 
-    while (currentId) {
-      const data = nodeDataMap.get(currentId);
-      if (data) {
-        ancestors.push({ ...data, id: currentId }); // Push data *and* id
-      }
-      currentId = parentMap.get(currentId);
+  if (isSmallScreen) {
+    // Mobile/tablet: only the current node
+    return selectedNodeData ? [{ ...selectedNodeData, id: selectedId }] : [];
+  }
+
+  // Desktop: show full ancestor chain
+  const ancestors: (TreeNodeData & { id: string })[] = [];
+  let currentId: string | undefined = selectedId;
+
+  while (currentId) {
+    const data = nodeDataMap.get(currentId);
+    if (data) {
+      ancestors.push({ ...data, id: currentId });
     }
-    return ancestors.reverse(); // Reverse to show root first
-  }, [selectedId])(); // Now depends on selectedId
+    currentId = parentMap.get(currentId);
+  }
+
+  return ancestors.reverse();
+}, [selectedId, isSmallScreen]);
+
 
   // Helper function to stop traversal and set selected node
   const handleNodeClick = (nodeId: string) => {

@@ -70,3 +70,15 @@ body {
 .group:hover .pulse-dot {
   animation: pulse-dot 0.8s ease;
 }
+
+.diagonal-lines {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    #ccc 11px, /* Your line color */
+    #ccc 11px  /* This makes the line 1px thick */
+  );
+  /* You can also set a base background color if you want */
+  background-color: #ffffff; 
+}
