@@ -11,13 +11,14 @@ export default function Home() {
       <NavBar />
       <main className="flex flex-col gap-8">
         <div className="
-          flex flex-col md:flex-row w-full gap-8 mt-15 
+          flex flex-col md:flex-row w-full gap-8 md:gap-16 lg:gap-24 xl:gap-32 mt-15 
           items-center justify-center px-4
         ">
           <HomeFlyer />
           <AnimatedBoard />
         </div>
-        <div className="">
+        <div className="flex flex-col md:flex-row w-full px-4 mt-15 
+          items-center justify-center">
           <FeatureTree />
 
         </div>

@@ -5,14 +5,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion"; // Import AnimatePresence
-
-// --- 1. Define Data & Types ---
-
-type TreeNodeData = {
-  header: string;
-  longHeader: string;
-  paragraph: string;
-};
+import type { TreeNodeData } from "@/lib/types";
 
 // All our node data, including paragraph text
 const nodeDataMap = new Map<string, TreeNodeData>([
@@ -285,7 +278,7 @@ export default function FeatureTree() {
   }, []); // Empty dependency, runs once
 
   return (
-    <div className="flex flex-col md:flex-row gap-8 p-8 bg-white mt-4">
+    <div className="flex flex-col md:flex-row gap-8 md:gap-16 lg:gap-24 xl:gap-32 p-8 bg-white mt-4">
       {/* Left Side: SVG Tree */}
       <div className="md:w-1/2 w-full flex items-start justify-center h-">
         <svg

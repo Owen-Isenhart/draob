@@ -1,17 +1,10 @@
 "use client";
 import { motion, PanInfo } from "framer-motion";
-import { useState, ElementType, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import Link from "next/link"; // Added Link import
-
-// --- Full Screen Fill Animation Component ---
-
-interface FillProps {
-  x: number;
-  y: number;
-  color: string;
-}
+import type { FillProps, TabProps } from "@/lib/types";
 
 const FullScreenFill = ({ x, y, color }: FillProps) => {
   const [endRadius, setEndRadius] = useState(0);
@@ -48,17 +41,6 @@ const FullScreenFill = ({ x, y, color }: FillProps) => {
     />
   );
 };
-
-
-// --- Tab Component ---
-
-interface TabProps {
-  colorClass: string; // Tailwind class for hover (e.g., "pink-600")
-  bgColor: string;    // Hex code for fill animation (e.g., "#db2777")
-  href: string;
-  isFirst: boolean;
-  icon: ElementType;
-}
 
 const colorMap: Record<string, string> = {
   "pink-600": "group-hover:text-pink-600",

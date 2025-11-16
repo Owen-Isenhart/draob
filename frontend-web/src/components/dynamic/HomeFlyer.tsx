@@ -3,8 +3,7 @@
 // make responsive
 
 import Tab from "./Tab";
-import { ElementType } from "react";
-
+import type { TabData } from "@/lib/types";
 // 1. Import your icons
 import {
   FaInstagram,
@@ -15,13 +14,6 @@ import {
 } from "react-icons/fa";
 import { MdOutlineEmail } from "react-icons/md";
 
-// 2. Define an interface for your tab data (good practice)
-interface TabData {
-  color: string;
-  bgColor: string;
-  href: string;
-  icon: ElementType; // The icon component itself
-}
 
 export default function HomeFlyer() {
   // 3. Update your tabs array to include the icons
@@ -41,7 +33,7 @@ export default function HomeFlyer() {
       <div className="rotate-4 absolute inset-0 translate-x-1 translate-y-1 bg-gray-100 rounded-lg"></div>
 
       {/* Main flyer */}
-      <div className="relative h-100 sm:h-120 -rotate-2 bg-white rounded-lg shadow-lg flex flex-col">
+      <div className="relative h-100 sm:h-120 -rotate-2 bg-white rounded-lg shadow-lg shadow-black/25 flex flex-col">
         {/* Content */}
         <div className="flex-grow">
           <h1 className="text-5xl sm:text-6xl font-bold pt-8 px-8">

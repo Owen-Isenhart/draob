@@ -31,10 +31,10 @@ export default function NavBar() {
           login
         </Link>
         <Link
-          href="/signup"
+          href="/register"
           className="bg-amber-700 py-1 px-2 border border-amber-700 text-white rounded-md hover:bg-white hover:border-amber-700 hover:text-black transition-all duration-300"
         >
-          sign up
+          register
         </Link>
       </div>
     </nav>

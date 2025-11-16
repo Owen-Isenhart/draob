@@ -1,12 +1,7 @@
 "use client";
 import { motion, MotionProps } from "framer-motion";
 import { ReactNode } from "react";
-
-// Combine MotionProps with our own to allow animation props
-interface FlyerProps extends MotionProps {
-  children: ReactNode;
-  className?: string;
-}
+import type { FlyerProps } from "@/lib/types";
 
 export default function Flyer({ children, className, ...rest }: FlyerProps) {
   return (
