@@ -1,17 +1,16 @@
 // to do
-// make it automatically go through the paths of the tree
 // make it to where you can use arrow keys to traverse
-// make animations better
 
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion"; // Import AnimatePresence
 
 // --- 1. Define Data & Types ---
 
 type TreeNodeData = {
   header: string;
-  longHeader: string,
+  longHeader: string;
   paragraph: string;
 };
 
@@ -92,6 +91,17 @@ const parentMap = new Map<string, string>([
   ["grandchild-b2", "child-b"],
 ]);
 
+// Define the DFS traversal path
+const dfsPath = [
+  "root",
+  "child-a",
+  "grandchild-a1",
+  "grandchild-a2",
+  "child-b",
+  "grandchild-b1",
+  "grandchild-b2",
+];
+
 // --- 2. SVG Layout Definitions (Adjusted for Circles) ---
 
 const NODE_RADIUS = 40; // Radius of each circle
@@ -103,12 +113,36 @@ const NODE_SPACING_Y = NODE_DIAMETER + 60; // Spacing between nodes vertically
 const svgNodes = [
   // x and y here are the CENTER of the circle
   { id: "root", x: 250, y: NODE_RADIUS + 20 },
-  { id: "child-a", x: 250 - NODE_SPACING_X, y: NODE_RADIUS + 20 + NODE_SPACING_Y },
-  { id: "child-b", x: 250 + NODE_SPACING_X, y: NODE_RADIUS + 20 + NODE_SPACING_Y },
-  { id: "grandchild-a1", x: (250 - NODE_SPACING_X) - NODE_SPACING_X / 2, y: NODE_RADIUS + 20 + NODE_SPACING_Y * 2 },
-  { id: "grandchild-a2", x: (250 - NODE_SPACING_X) + NODE_SPACING_X / 2, y: NODE_RADIUS + 20 + NODE_SPACING_Y * 2 },
-  { id: "grandchild-b1", x: (250 + NODE_SPACING_X) - NODE_SPACING_X / 2, y: NODE_RADIUS + 20 + NODE_SPACING_Y * 2 },
-  { id: "grandchild-b2", x: (250 + NODE_SPACING_X) + NODE_SPACING_X / 2, y: NODE_RADIUS + 20 + NODE_SPACING_Y * 2 },
+  {
+    id: "child-a",
+    x: 250 - NODE_SPACING_X,
+    y: NODE_RADIUS + 20 + NODE_SPACING_Y,
+  },
+  {
+    id: "child-b",
+    x: 250 + NODE_SPACING_X,
+    y: NODE_RADIUS + 20 + NODE_SPACING_Y,
+  },
+  {
+    id: "grandchild-a1",
+    x: 250 - NODE_SPACING_X - NODE_SPACING_X / 2,
+    y: NODE_RADIUS + 20 + NODE_SPACING_Y * 2,
+  },
+  {
+    id: "grandchild-a2",
+    x: 250 - NODE_SPACING_X + NODE_SPACING_X / 2,
+    y: NODE_RADIUS + 20 + NODE_SPACING_Y * 2,
+  },
+  {
+    id: "grandchild-b1",
+    x: 250 + NODE_SPACING_X - NODE_SPACING_X / 2,
+    y: NODE_RADIUS + 20 + NODE_SPACING_Y * 2,
+  },
+  {
+    id: "grandchild-b2",
+    x: 250 + NODE_SPACING_X + NODE_SPACING_X / 2,
+    y: NODE_RADIUS + 20 + NODE_SPACING_Y * 2,
+  },
 ].map((node) => ({
   ...node,
   header: nodeDataMap.get(node.id)!.header,
@@ -128,7 +162,7 @@ const svgEdges = [
 const getNodeCenter = (nodeId: string) => {
   const node = svgNodes.find((n) => n.id === nodeId);
   if (!node) return { x: 0, y: 0 };
-  
+
   // For circles, the "top" and "bottom" connection points are simply offset from the center
   return {
     top: { x: node.x, y: node.y - NODE_RADIUS },
@@ -136,50 +170,122 @@ const getNodeCenter = (nodeId: string) => {
   };
 };
 
+// Helper to get the depth of a node (0 = root)
+const getNodeDepth = (nodeId: string): number => {
+  let d = 0;
+  let currentId: string | undefined = nodeId;
+  while (currentId) {
+    const parentId = parentMap.get(currentId);
+    if (!parentId) break;
+    d++;
+    currentId = parentId;
+  }
+  return d;
+};
+
 // --- 3. Main Component ---
 
 export default function FeatureTree() {
   const [selectedId, setSelectedId] = useState("root");
+  const [isTraversing, setIsTraversing] = useState(true); // State to control traversal
+  const pathIndex = useRef(0); // Ref to track traversal position
 
-  // Create a memoized Set of active edge IDs
-  const activeEdgeIds = useMemo(() => {
-    const edgeIds = new Set<string>();
+  // This MUST match the line animation duration
+  const UNDRAW_DURATION = 0.3;
+
+  // Effect to run the automatic traversal
+  useEffect(() => {
+    if (isTraversing) {
+      const interval = setInterval(() => {
+        pathIndex.current = (pathIndex.current + 1) % dfsPath.length;
+        const newId = dfsPath[pathIndex.current];
+        setSelectedId(newId); // This triggers all animations
+      }, 2500); // Change node every 2 seconds
+
+      return () => clearInterval(interval); // Cleanup interval on unmount or when isTraversing changes
+    }
+  }, [isTraversing]); // This effect depends on the isTraversing state
+
+  // Create a memoized Set of all active node IDs (root to selected)
+  const activeNodeIds = useMemo(() => {
+    const nodeIds = new Set<string>();
     let currentId: string | undefined = selectedId;
 
     // Walk up the tree from the selected node
     while (currentId) {
-      const parentId = parentMap.get(currentId);
-      if (!parentId) {
-        break; // Reached the root
+      nodeIds.add(currentId);
+      currentId = parentMap.get(currentId);
+    }
+    return nodeIds;
+  }, [selectedId]); // This recalculates whenever selectedId changes
+
+  // Create a memoized Set of active edge IDs
+  const activeEdgeIds = useMemo(() => {
+    const edgeIds = new Set<string>();
+    // Iterate over the active nodes (excluding root)
+    for (const nodeId of activeNodeIds) {
+      const parentId = parentMap.get(nodeId);
+      if (parentId) {
+        edgeIds.add(`${parentId}-${nodeId}`);
       }
-      
-      // Add the edge ID (e.g., "root-child-a") to the Set
-      edgeIds.add(`${parentId}-${currentId}`);
-      
-      // Move up to the parent
-      currentId = parentId;
     }
     return edgeIds;
-  }, [selectedId]); // This recalculates whenever selectedId changes
+  }, [activeNodeIds]); // This recalculates whenever activeNodeIds changes
 
   // Get the data for the right-side display
   const nodesToDisplay = useCallback(() => {
-    const ancestors: TreeNodeData[] = [];
-    let currentId: string | undefined = selectedId;
+    const ancestors: (TreeNodeData & { id: string })[] = []; // Add id to data
+    let currentId: string | undefined = selectedId; // Use selectedId directly
 
     while (currentId) {
       const data = nodeDataMap.get(currentId);
       if (data) {
-        ancestors.push(data);
+        ancestors.push({ ...data, id: currentId }); // Push data *and* id
       }
       currentId = parentMap.get(currentId);
     }
     return ancestors.reverse(); // Reverse to show root first
-  }, [selectedId])();
+  }, [selectedId])(); // Now depends on selectedId
+
+  // Helper function to stop traversal and set selected node
+  const handleNodeClick = (nodeId: string) => {
+    if (isTraversing) {
+      setIsTraversing(false); // Stop traversal forever
+    }
+    setSelectedId(nodeId); // This triggers all animations
+  };
+
+  // Calculate line lengths once
+  const edgeLengths = useMemo(() => {
+    const lengths = new Map<string, number>();
+    for (const edge of svgEdges) {
+      const sourcePos = getNodeCenter(edge.sourceId).bottom;
+      const targetPos = getNodeCenter(edge.targetId).top;
+      const dx = targetPos!.x - sourcePos!.x;
+      const dy = targetPos!.y - sourcePos!.y;
+      const length = Math.sqrt(dx * dx + dy * dy);
+      lengths.set(`${edge.sourceId}-${edge.targetId}`, length);
+    }
+    return lengths;
+  }, []); // Empty dependency array, runs once
+
+  // Calculate edge depths once
+  const [edgeDepthMap, MAX_DEPTH] = useMemo(() => {
+    const depths = new Map<string, number>();
+    let max = 0;
+
+    // We need to use the standalone getNodeDepth function here
+    for (const edge of svgEdges) {
+      // Depth of an edge is the depth of its target node
+      const depth = getNodeDepth(edge.targetId);
+      depths.set(`${edge.sourceId}-${edge.targetId}`, depth);
+      if (depth > max) max = depth;
+    }
+    return [depths, max];
+  }, []); // Empty dependency, runs once
 
   return (
     <div className="flex flex-col md:flex-row gap-8 p-8 bg-white mt-4">
-      
       {/* Left Side: SVG Tree */}
       <div className="md:w-1/2 w-full flex items-start justify-center h-">
         <svg
@@ -187,47 +293,97 @@ export default function FeatureTree() {
           className="w-full max-w-lg"
           style={{ userSelect: "none" }}
         >
-          {/* 1. Draw all the lines */}
-          <g className="lines">
+          {/* 1. Draw all the static gray dashed lines */}
+          <g className="lines-bg">
             {svgEdges.map((edge) => {
               const sourcePos = getNodeCenter(edge.sourceId).bottom;
               const targetPos = getNodeCenter(edge.targetId).top;
-              
-              const edgeId = `${edge.sourceId}-${edge.targetId}`;
-              const isActive = activeEdgeIds.has(edgeId);
-
               return (
                 <line
-                  key={edgeId}
+                  key={`${edge.sourceId}-${edge.targetId}-bg`}
                   x1={sourcePos!.x}
                   y1={sourcePos!.y}
                   x2={targetPos!.x}
                   y2={targetPos!.y}
-                  stroke={isActive ? "#2563eb" : "#9ca3af"} // blue-600 or gray-400
-                  strokeWidth={isActive ? 4 : 2}
-                  strokeDasharray={isActive ? "9 6" : "9 9"}
-                  style={{ transition: "all 0.3s ease-in-out" }}
+                  stroke={"#9ca3af"} // gray-400
+                  strokeWidth={2}
+                  strokeDasharray={"9 9"}
                 />
               );
             })}
           </g>
 
-          {/* 2. Draw all the nodes (circles and text) */}
+          {/* 2. Draw all the animating blue lines over top */}
+          <g className="lines-fg">
+            {svgEdges.map((edge) => {
+              const edgeId = `${edge.sourceId}-${edge.targetId}`;
+              const isActive = activeEdgeIds.has(edgeId);
+              const lineLength = edgeLengths.get(edgeId) || 0;
+              const depth = edgeDepthMap.get(edgeId) || 0;
+
+              const FADE_DURATION = 0.2;
+
+              // Delay for appearing (top-down)
+              const appearDelay = (depth - 1) * 0.2; // root-children (depth 1) = 0, grandchildren (depth 2) = 0.2
+
+              // Delay for disappearing (bottom-up)
+              const disappearDelay = (MAX_DEPTH - depth) * 0.3; // grandchild (depth 2) = 0, child (depth 1) = 0.3
+
+              const sourcePos = getNodeCenter(edge.sourceId).bottom;
+              const targetPos = getNodeCenter(edge.targetId).top;
+
+              return (
+                <motion.line
+                  key={edgeId}
+                  x1={sourcePos!.x}
+                  y1={sourcePos!.y}
+                  x2={targetPos!.x}
+                  y2={targetPos!.y}
+                  stroke={"#b45309"}
+                  strokeWidth={2}
+                  strokeDasharray={lineLength}
+                  // Start as "undrawn" and invisible
+                  initial={{ strokeDashoffset: lineLength, opacity: 0 }}
+                  // Animate to "drawn" and visible, or back
+                  animate={{
+                    strokeDashoffset: isActive ? 0 : lineLength,
+                    opacity: isActive ? 1 : 0,
+                  }}
+                  transition={{
+                    strokeDashoffset: {
+                      duration: UNDRAW_DURATION,
+                      ease: "easeOut",
+                      delay: isActive ? appearDelay : disappearDelay,
+                    },
+                    opacity: {
+                      duration: FADE_DURATION,
+                      // Fade out after undraw starts
+                      delay: isActive
+                        ? appearDelay
+                        : disappearDelay + UNDRAW_DURATION * 0.5,
+                    },
+                  }}
+                />
+              );
+            })}
+          </g>
+
+          {/* 3. Draw all the nodes (circles and text) */}
           <g className="nodes">
             {svgNodes.map((node) => {
-              const isSelected = node.id === selectedId;
+              const isActive = activeNodeIds.has(node.id); // Check if node is in the active path
               return (
                 <g
                   key={node.id}
-                  onClick={() => setSelectedId(node.id)}
+                  onClick={() => handleNodeClick(node.id)} // Use new handler
                   className="cursor-pointer"
                 >
                   <circle
                     cx={node.x} // Center X
                     cy={node.y} // Center Y
                     r={NODE_RADIUS} // Radius
-                    fill={isSelected ? "#dbeafe" : "#ffffff"} // blue-100 or white
-                    stroke={isSelected ? "#2563eb" : "#e5e7eb"} // blue-600 or gray-200
+                    fill={isActive ? "#fef3c7" : "#ffffff"} // blue-100 or white
+                    stroke={isActive ? "#b45309" : "#9ca3af"} // blue-600 or gray-200
                     strokeWidth={2}
                   />
                   <text
@@ -235,7 +391,7 @@ export default function FeatureTree() {
                     y={node.y} // Center Y
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    fill={isSelected ? "#1e40af" : "#374151"} // blue-800 or gray-700
+                    fill={isActive ? "#78350f" : "#374151"} // blue-800 or gray-700
                     className="text-sm font-semibold"
                   >
                     {node.header}
@@ -247,19 +403,38 @@ export default function FeatureTree() {
         </svg>
       </div>
 
-      {/* Right Side: Display (Unchanged) */}
-      <div className="md:w-1/2 w-full">
-        {nodesToDisplay.map((data, index) => (
-          <div
-            key={index}
-            className={`
-              ${index > 0 ? "mt-6 border-t border-gray-200 pt-6" : ""}
-            `}
-          >
-            <h2 className="text-2xl font-bold text-gray-800">{data.longHeader}</h2>
-            <p className="mt-2 text-md text-gray-600">{data.paragraph}</p>
-          </div>
-        ))}
+      {/* Right Side: Display */}
+      <div className="md:w-1/2 w-full relative overflow-hidden">
+        <AnimatePresence>
+          {nodesToDisplay.map((data, index) => {
+            // Calculate delay for this specific text block
+            const depth = getNodeDepth(data.id);
+            const appearDelay = depth === 0 ? 0 : (depth - 1) * 0.2;
+            const totalDelay = depth === 0 ? 0 : appearDelay + UNDRAW_DURATION;
+
+            return (
+              <motion.div
+                key={data.id} // Use stable ID for AnimatePresence
+                className={`
+                  ${index > 0 ? "mt-6 border-t border-gray-200 pt-6" : ""}
+                `}
+                initial={{ opacity: 0, x: -30 }} // Start invisible and to the left
+                animate={{ opacity: 1, x: 0 }} // Animate to visible and in place
+                exit={{ opacity: 0, position: "absolute" }} // Fade out and prevent layout jump
+                transition={{
+                  duration: 0.2, // Duration of the slide
+                  delay: totalDelay, // Wait for the line animation to finish
+                  ease: "easeInOut",
+                }}
+              >
+                <h2 className="text-2xl font-bold text-gray-800">
+                  {data.longHeader}
+                </h2>
+                <p className="mt-2 text-md text-gray-600">{data.paragraph}</p>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
       </div>
     </div>
   );

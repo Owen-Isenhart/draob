@@ -17,7 +17,7 @@ export default function AnimatedBoard() {
     <div
       // 1. Replaced `h-100` with `h-96`
       // 2. You also need `w-full` to make it fill the `max-w-lg`
-      className="relative w-full max-w-lg border h-96 overflow-hidden mr-auto" 
+      className="relative w-full max-w-lg border h-96 sm:h-114 overflow-hidden" 
       style={graphPaperStyle}
     >
       {/* Flyer 1 */}

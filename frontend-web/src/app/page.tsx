@@ -10,7 +10,10 @@ export default function Home() {
     <div className="">
       <NavBar />
       <main className="flex flex-col gap-8">
-        <div className="flex flex-row w-full gap-8 mt-15">
+        <div className="
+          flex flex-col md:flex-row w-full gap-8 mt-15 
+          items-center justify-center px-4
+        ">
           <HomeFlyer />
           <AnimatedBoard />
         </div>
