@@ -20,7 +20,7 @@ export default function HomeFlyer() {
   const tabs: TabData[] = [
     { color: "pink-600", bgColor: "#db2777",href: "https://instagram.com/",icon: FaInstagram,},
     { color: "indigo-600", bgColor: "#4f46e5", href: "https://discord.com/", icon: FaDiscord }, // Was "Discord"
-    { color: "emerald-600", bgColor: "#059669", href: "https://github.com/Owen-Isenhart/draob", icon: FaArrowRight,},
+    { color: "emerald-600", bgColor: "#059669", href: "/board", icon: FaArrowRight,},
     { color: "red-600", bgColor: "#dc2626", href: "mailto:contact@draob.net", icon: MdOutlineEmail }, // Was "Email"
     { color: "gray-800", bgColor: "#1f2937", href: "https://github.com/Owen-Isenhart/draob", icon: FaGithub }, // Was "GitHub"
     { color: "sky-600", bgColor: "#0284c7", href: "/about", icon: FaUser }, // Was "About"

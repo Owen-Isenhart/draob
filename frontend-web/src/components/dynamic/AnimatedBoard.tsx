@@ -1,7 +1,7 @@
 // to do
 // 
 
-import Flyer from "./Flyer"; // Make sure this path is correct
+import Flyer from "./DummyFlyer"; // Make sure this path is correct
 
 export default function AnimatedBoard() {
   const graphPaperStyle = {

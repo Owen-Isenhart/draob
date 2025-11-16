@@ -47,3 +47,22 @@ export interface TabProps {
   isFirst: boolean;
   icon: ElementType;
 }
+
+export interface FlyerData {
+  id: string;
+  title: string;
+  organization: string;
+  description: string;
+  location: string;
+  time: string;
+  user: number;
+  type: number;
+  images: File[] | null;
+  x: number;
+  y: number;
+}
+
+export interface FlyerDataImg {
+  id: string;
+  img: File;
+}
